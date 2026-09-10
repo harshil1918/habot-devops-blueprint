@@ -1,0 +1,101 @@
+# =============================================================================
+# HabotConnect FZCO - Junior Cloud & DevOps Engineer Hiring Project
+# Task 2: Poka-Yoke Automated CI/CD Build Gate
+#
+# Author : Harshil Parmar
+# Contact : harshilparmar1907@gmil.com | +91 9824624715
+#
+# Philosophy: FAIL-CLOSED. The pipeline denies by default. A commit only
+# reaches deployment if EVERY gate passes. Any formatting error, lint error,
+# or hardcoded secret halts the build immediately and quarantines the artifact.
+# We do not rely on human review to catch these; the gate enforces the rule.
+# =============================================================================
+
+name: Poka-Yoke Fail-Closed Build Gate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+# Least privilege: the workflow can only read the repository.
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Security and Format Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # GATE 1 - Hardcoded secret scan (the incident that triggered this task)
+      # A dedicated script greps for credential patterns. Any hit exits non-zero
+      # and stops the whole job before any build or deploy step can run.
+      # -----------------------------------------------------------------------
+      - name: "Gate 1 - Scan for hardcoded API secrets"
+        run: bash task2_pokayoke_cicd/scripts/scan_secrets.sh
+
+      # -----------------------------------------------------------------------
+      # GATE 2 - Gitleaks deep secret scan (defence in depth)
+      # -----------------------------------------------------------------------
+      - name: "Gate 2 - Gitleaks secret scan"
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # -----------------------------------------------------------------------
+      # GATE 3 - Python formatting and lint (Black + Flake8)
+      # --check makes Black report, never auto-fix, so a badly formatted commit
+      # fails instead of being silently rewritten.
+      # -----------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python tooling
+        run: pip install black==24.8.0 flake8==7.1.1
+
+      - name: "Gate 3a - Black format check (fail-closed)"
+        run: black --check --diff task3_schema_dcyn/
+
+      - name: "Gate 3b - Flake8 lint (fail-closed)"
+        run: flake8 --max-line-length=100 task3_schema_dcyn/
+
+      # -----------------------------------------------------------------------
+      # GATE 4 - Terraform format and validate
+      # -----------------------------------------------------------------------
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: "Gate 4a - Terraform fmt check (fail-closed)"
+        run: terraform -chdir=task1_terraform_iac fmt -check -recursive
+
+      - name: "Gate 4b - Terraform validate"
+        run: |
+          terraform -chdir=task1_terraform_iac init -backend=false -input=false
+          terraform -chdir=task1_terraform_iac validate
+
+  # ---------------------------------------------------------------------------
+  # QUARANTINE - runs ONLY if the gate job failed. It records the failed commit
+  # so a broken or insecure change is visibly isolated and never promoted.
+  # ---------------------------------------------------------------------------
+  quarantine:
+    name: Quarantine Failed Build
+    runs-on: ubuntu-latest
+    needs: gate
+    if: failure()
+    steps:
+      - name: Record quarantine notice
+        run: |
+          echo "::error::BUILD QUARANTINED - commit ${{ github.sha }} failed a Poka-Yoke gate."
+          echo "Author: ${{ github.actor }}"
+          echo "This commit is blocked from deployment. Fix the reported gate and re-push."
+          exit 1

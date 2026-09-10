@@ -1,0 +1,12 @@
+{
+  "student_id": "STU-2026-00417",
+  "full_name": "Amara Okafor",
+  "age": 9,
+  "guardian_email": "guardian@example.com",
+  "guardian_phone": "+971500000000",
+  "learning_difficulty_type": "dyslexia",
+  "existing_support_plan": true,
+  "hours_requested_per_week": 6,
+  "consent_signature": "Amara Guardian",
+  "region_owner_group": "region-uae"
+}

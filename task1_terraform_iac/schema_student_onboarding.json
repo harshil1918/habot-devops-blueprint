@@ -1,0 +1,10 @@
+[
+  { "name": "student_id",        "type": "STRING",  "mode": "REQUIRED", "description": "Unique student identifier." },
+  { "name": "full_name",         "type": "STRING",  "mode": "REQUIRED", "description": "Student full legal name." },
+  { "name": "age",               "type": "INTEGER", "mode": "REQUIRED", "description": "Student age in years." },
+  { "name": "guardian_email",    "type": "STRING",  "mode": "REQUIRED", "description": "Parent or guardian contact email." },
+  { "name": "has_learning_plan", "type": "BOOLEAN", "mode": "REQUIRED", "description": "Whether an existing learning support plan is on file." },
+  { "name": "consent_given",     "type": "BOOLEAN", "mode": "REQUIRED", "description": "Whether guardian consent was granted." },
+  { "name": "region_owner_group","type": "STRING",  "mode": "REQUIRED", "description": "Owning region group, used for Row-Level Security filtering." },
+  { "name": "ingested_at",       "type": "TIMESTAMP","mode": "REQUIRED","description": "UTC ingestion timestamp." }
+]

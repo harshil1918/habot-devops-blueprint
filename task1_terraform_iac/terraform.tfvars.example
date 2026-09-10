@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars and fill with your real values before validate/plan.
+project_id           = "habot-staging-project"
+project_number       = "123456789012"
+region               = "europe-west1"
+name_prefix          = "habot-staging"
+data_owner_group     = "data-owners@habot.io"
+analyst_reader_group = "analysts@habot.io"
